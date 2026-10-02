@@ -1,7 +1,7 @@
 {
   "id": "lacartoons-catalog",
   "name": "LACartoons Catalog",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "apiVersion": 1,
   "description": "Catálogo de series animadas de LACartoons.",
   "logo": "icon.png",
@@ -10,25 +10,66 @@
   "type": "catalog",
   "entry": "index.js",
   "mode": "vod",
-  "capabilities": ["home", "search", "discover", "meta"],
+  "capabilities": [
+    "home",
+    "search",
+    "discover",
+    "meta"
+  ],
   "mediaKinds": [
-    { "id": "series", "label": "Series" },
-    { "id": "anime", "label": "Animación" }
+    {
+      "id": "series",
+      "label": "Series"
+    },
+    {
+      "id": "anime",
+      "label": "Animación"
+    }
   ],
   "genresByKind": {
     "series": [
-      { "id": "todas", "name": "Todas" }
+      {
+        "id": "todas",
+        "name": "Todas"
+      }
     ],
     "anime": [
-      { "id": "todas", "name": "Todas" }
+      {
+        "id": "todas",
+        "name": "Todas"
+      }
     ]
   },
-  "hosts": ["www.lacartoons.com", "*.lacartoons.com"],
-  "permissions": ["network"],
-  "tags": ["español", "animación", "series", "lacartoons"],
-  "resources": ["catalog", "meta", "search"],
-  "exports": ["getHome", "discover", "search", "getMeta"],
-  "supportedTypes": ["tv", "series"],
-  "contentLanguage": ["es"],
+  "hosts": [
+    "www.lacartoons.com",
+    "*.lacartoons.com"
+  ],
+  "permissions": [
+    "network"
+  ],
+  "tags": [
+    "español",
+    "animación",
+    "series",
+    "lacartoons"
+  ],
+  "resources": [
+    "catalog",
+    "meta",
+    "search"
+  ],
+  "exports": [
+    "getHome",
+    "discover",
+    "search",
+    "getMeta"
+  ],
+  "supportedTypes": [
+    "tv",
+    "series"
+  ],
+  "contentLanguage": [
+    "es"
+  ],
   "defaultCategory": "series"
 }

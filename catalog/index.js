@@ -62,8 +62,10 @@ function mapItem(raw) {
   return {
     id: raw.id,
     title: raw.title,
+    name: raw.title,
     type: 'series',
     poster: raw.poster || null,
+    posterUrl: raw.poster || null,
     backdrop: raw.poster || null,
     year: raw.year ? parseInt(String(raw.year).slice(0, 4), 10) : null,
     overview: '',
@@ -71,6 +73,8 @@ function mapItem(raw) {
     extra: {
       source: 'lacartoons',
       lacartoonsUrl: raw.ref,
+      tmdbId: raw.ref,
+      url_personalizada: raw.ref,
       mediaType: 'tv',
     },
   };
@@ -208,9 +212,19 @@ function parseEpisodes(html, seriesUrl) {
       episodes.push({
         id: seriesId(seriesUrl, '') + ':s' + season + 'e' + number,
         title: title || 'Capítulo ' + number,
+        name: title || 'Capítulo ' + number,
         season: season,
         episode: number,
+        seasonNumber: season,
+        episodeNumber: number,
+        number: number,
         url: url,
+        extra: {
+          lacartoonsUrl: url,
+          tmdbId: url,
+          url_personalizada: url,
+          source: 'lacartoons',
+        },
       });
     }
   }
@@ -265,11 +279,19 @@ async function getMeta(args, config) {
     seasonsMap[s].push({
       id: ep.id,
       title: ep.title,
+      name: ep.title,
       season: ep.season,
       episode: ep.episode,
+      seasonNumber: ep.seasonNumber || ep.season,
+      episodeNumber: ep.episodeNumber || ep.episode,
+      number: ep.episodeNumber || ep.episode,
+      url: ep.url,
       still: poster,
+      poster: poster,
       extra: {
         lacartoonsUrl: ep.url,
+        tmdbId: ep.url,
+        url_personalizada: ep.url,
         source: 'lacartoons',
       },
     });
@@ -279,21 +301,33 @@ async function getMeta(args, config) {
       return Number(a) - Number(b);
     })
     .map(function (s) {
-      return { season: Number(s), episodes: seasonsMap[s] };
+      return {
+        seasonNumber: Number(s),
+        season_number: Number(s),
+        season: Number(s),
+        name: 'Temporada ' + s,
+        episodeCount: seasonsMap[s].length,
+        episode_count: seasonsMap[s].length,
+        episodes: seasonsMap[s],
+      };
     });
 
   return {
     item: {
       id: seriesId(url, title),
       title: title,
+      name: title,
       type: 'series',
       poster: poster,
+      posterUrl: poster,
       backdrop: poster,
       overview: '',
       genres: ['Animación'],
       extra: {
         source: 'lacartoons',
         lacartoonsUrl: url,
+        tmdbId: url,
+        url_personalizada: url,
         mediaType: 'tv',
         seasons: seasons,
       },

@@ -44,11 +44,15 @@ function streamObj(url, quality, name, headers) {
   var u = String(url);
   var isHls = /\.m3u8(\?|$)/i.test(u) || /hls/i.test(u);
   var isMp4 = /\.mp4(\?|$)/i.test(u);
+  var n = name || 'LACartoons';
   return {
     url: u,
     quality: quality || (isHls ? 'HLS' : isMp4 ? 'MP4' : 'HD'),
-    name: name || 'LACartoons',
+    name: n,
+    title: n + (quality ? ' · ' + quality : ''),
+    provider: 'LACartoons',
     type: isHls ? 'hls' : isMp4 ? 'mp4' : 'url',
+    isHls: isHls,
     headers: headers || { 'User-Agent': UA, Referer: BASE + '/' },
   };
 }
@@ -237,125 +241,163 @@ async function resolveDhtpre(embedUrl) {
 
 async function streamsFromEpisodePage(episodeUrl) {
   var html = await fetchHtml(episodeUrl);
-  var iframe = /<iframe[^>]+src="([^"]+)"/i.exec(html);
-  if (!iframe) return [];
-  var embedUrl = absolute(iframe[1]);
-  var hostname = '';
-  try {
-    hostname = new URL(embedUrl).hostname.toLowerCase();
-  } catch (e) {
-    return [];
-  }
-
-  if (
-    hostname === 'ok.ru' ||
-    hostname.indexOf('.ok.ru') >= 0 ||
-    hostname.indexOf('odnoklassniki') >= 0
-  ) {
-    return await resolveOkRu(embedUrl);
-  }
-  if (hostname === 'dhtpre.com' || hostname.indexOf('.dhtpre.com') >= 0) {
-    return await resolveDhtpre(embedUrl);
-  }
-  // CubeEmbed u otros: devolver embed como último recurso no ayuda al player;
-  // intentar extraer m3u8/mp4 del HTML del embed
-  if (
-    hostname.indexOf('cubeembed') >= 0 ||
-    hostname.indexOf('rpmvid') >= 0
-  ) {
-    try {
-      var ch = await fetchHtml(embedUrl, { Referer: BASE + '/' });
-      var found =
-        ch.match(/https?:\/\/[^"'\\s]+\.(?:m3u8|mp4)[^"'\\s]*/gi) || [];
-      var out = [];
-      for (var i = 0; i < found.length; i++) {
-        var s = streamObj(
-          found[i].replace(/\\u0026/g, '&'),
-          /\.m3u8/i.test(found[i]) ? 'HLS' : 'MP4',
-          'CubeEmbed',
-          { 'User-Agent': UA, Referer: embedUrl }
-        );
-        if (s) out.push(s);
-      }
-      return out;
-    } catch (e) {
-      return [];
+  var embeds = [];
+  var seenE = {};
+  var iframeRe = /<iframe[^>]+src=["']([^"']+)["']/gi;
+  var im;
+  while ((im = iframeRe.exec(html)) !== null) {
+    var eu = absolute(im[1]);
+    if (!seenE[eu]) {
+      seenE[eu] = true;
+      embeds.push(eu);
     }
   }
-  // generico
-  try {
-    var gh = await fetchHtml(embedUrl, { Referer: BASE + '/' });
-    var gfound =
-      gh.match(/https?:\/\/[^"'\\s]+\.(?:m3u8|mp4)[^"'\\s]*/gi) || [];
-    return gfound
-      .map(function (u) {
-        return streamObj(u.replace(/\\u0026/g, '&'), /\.m3u8/i.test(u) ? 'HLS' : 'MP4', hostname, {
-          'User-Agent': UA,
-          Referer: embedUrl,
-        });
-      })
-      .filter(Boolean);
-  } catch (e) {
-    return [];
+  var other =
+    html.match(
+      /https?:\/\/(?:[\w.-]*\.)?(?:ok\.ru|odnoklassniki\.ru|dhtpre\.com|cubeembed\.rpmvid\.com)[^"'\s]*/gi
+    ) || [];
+  for (var oi = 0; oi < other.length; oi++) {
+    var ou = other[oi].replace(/&amp;/g, '&');
+    if (!seenE[ou]) {
+      seenE[ou] = true;
+      embeds.push(ou);
+    }
   }
+
+  var vsrc = /<video[^>]+src=["']([^"']+)["']/i.exec(html);
+  if (vsrc) {
+    var vs = streamObj(absolute(vsrc[1]), null, 'Video', {
+      'User-Agent': UA,
+      Referer: episodeUrl,
+    });
+    if (vs) return [vs];
+  }
+
+  if (!embeds.length) return [];
+
+  var all = [];
+  for (var ei = 0; ei < embeds.length; ei++) {
+    var embedUrl = embeds[ei];
+    var hostname = '';
+    try {
+      hostname = new URL(embedUrl).hostname.toLowerCase();
+    } catch (e) {
+      continue;
+    }
+
+    try {
+      if (
+        hostname === 'ok.ru' ||
+        hostname.indexOf('.ok.ru') >= 0 ||
+        hostname.indexOf('odnoklassniki') >= 0
+      ) {
+        var ok = await resolveOkRu(embedUrl);
+        for (var a = 0; a < ok.length; a++) all.push(ok[a]);
+        continue;
+      }
+      if (hostname === 'dhtpre.com' || hostname.indexOf('.dhtpre.com') >= 0) {
+        var dh = await resolveDhtpre(embedUrl);
+        for (var b = 0; b < dh.length; b++) all.push(dh[b]);
+        continue;
+      }
+      if (
+        hostname.indexOf('cubeembed') >= 0 ||
+        hostname.indexOf('rpmvid') >= 0
+      ) {
+        var ch = await fetchHtml(embedUrl, { Referer: BASE + '/' });
+        var found =
+          ch.match(/https?:\/\/[^"'\s]+\.(?:m3u8|mp4)[^"'\s]*/gi) || [];
+        for (var c = 0; c < found.length; c++) {
+          var s = streamObj(
+            found[c].replace(/\\u0026/g, '&'),
+            /\.m3u8/i.test(found[c]) ? 'HLS' : 'MP4',
+            'CubeEmbed',
+            { 'User-Agent': UA, Referer: embedUrl }
+          );
+          if (s) all.push(s);
+        }
+        continue;
+      }
+      // genérico
+      var gh = await fetchHtml(embedUrl, { Referer: BASE + '/' });
+      var gfound =
+        gh.match(/https?:\/\/[^"'\s]+\.(?:m3u8|mp4)[^"'\s]*/gi) || [];
+      for (var d = 0; d < gfound.length; d++) {
+        var s2 = streamObj(
+          gfound[d].replace(/\\u0026/g, '&'),
+          /\.m3u8/i.test(gfound[d]) ? 'HLS' : 'MP4',
+          hostname,
+          { 'User-Agent': UA, Referer: embedUrl }
+        );
+        if (s2) all.push(s2);
+      }
+    } catch (e) {}
+  }
+  return all;
 }
 
-function pickEpisodeUrl(args) {
-  if (!args) return null;
-  if (args.url && /lacartoons\.com/i.test(args.url)) return args.url;
-  if (args.extra) {
-    if (args.extra.lacartoonsUrl) return args.extra.lacartoonsUrl;
-    if (args.extra.url) return args.extra.url;
+function resolveEpisodeUrl(tmdbId, season, episode) {
+  if (!tmdbId) return null;
+  var raw = String(tmdbId).trim();
+
+  // Ya es URL de capítulo
+  if (/lacartoons\.com/i.test(raw) && /capitulo/i.test(raw)) {
+    return raw;
   }
-  if (args.episode && args.episode.extra && args.episode.extra.lacartoonsUrl) {
-    return args.episode.extra.lacartoonsUrl;
+  // Cualquier URL http de lacartoons (capítulo u otra)
+  if (/^https?:\/\//i.test(raw) && /lacartoons\.com/i.test(raw)) {
+    return raw;
   }
-  // a veces id es la URL
-  if (args.id && /^https?:\/\//i.test(String(args.id))) return String(args.id);
+  // URL genérica http
+  if (/^https?:\/\//i.test(raw)) {
+    return raw;
+  }
   return null;
 }
 
-/**
- * getStreams({ id, type, title, season, episode, extra, url })
- */
-async function getStreams(args, config) {
-  var episodeUrl = pickEpisodeUrl(args);
-
-  // Si no hay URL de capítulo, intentar página de serie + season/episode
-  if (!episodeUrl && args) {
-    var seriesUrl =
-      (args.extra && args.extra.lacartoonsUrl) ||
-      (args.seriesUrl) ||
-      null;
-    if (seriesUrl && args.season != null && args.episode != null) {
-      // La URL real de capítulo suele ser /serie/capitulo/...; sin slug exacto
-      // reutilizamos getMeta no disponible aquí → fallar limpio
-    }
+async function getStreams(tmdbId, type, season, episode) {
+  // Compat: a veces llega un objeto
+  if (tmdbId && typeof tmdbId === 'object') {
+    var o = tmdbId;
+    tmdbId =
+      o.tmdbId ||
+      o.url_personalizada ||
+      o.lacartoonsUrl ||
+      o.url ||
+      o.id ||
+      '';
+    type = type || o.type;
+    season = season != null ? season : o.season;
+    episode = episode != null ? episode : o.episode;
   }
 
+  var episodeUrl = resolveEpisodeUrl(tmdbId, season, episode);
   if (!episodeUrl) {
-    return { streams: [] };
+    return [];
   }
 
-  // Si es página de serie (no capítulo), no hay un solo stream
+  // Página de serie sin capítulo → no hay stream único
   if (/\/serie\//i.test(episodeUrl) && !/capitulo/i.test(episodeUrl)) {
-    return { streams: [] };
+    return [];
   }
 
   try {
     var streams = await streamsFromEpisodePage(episodeUrl);
-    // dedupe
     var seen = {};
     var unique = [];
     for (var i = 0; i < streams.length; i++) {
       var s = streams[i];
       if (!s || !s.url || seen[s.url]) continue;
       seen[s.url] = true;
+      // Campos que la app espera
+      if (!s.title) s.title = s.name || 'LACartoons';
+      if (!s.provider) s.provider = 'LACartoons';
       unique.push(s);
     }
-    return { streams: unique };
+    // Array directo (JsRuntime) o {streams}
+    return unique;
   } catch (e) {
-    return { streams: [] };
+    return [];
   }
 }
 

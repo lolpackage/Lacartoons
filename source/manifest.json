@@ -1,7 +1,7 @@
 {
   "id": "lacartoons-source",
   "name": "LACartoons",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "apiVersion": 1,
   "description": "Servidores LACartoons: OK.ru (HLS/MP4) y Dhtpre. CubeEmbed si hay clave.",
   "logo": "icon.png",
@@ -10,7 +10,10 @@
   "type": "source",
   "entry": "index.js",
   "mode": "vod",
-  "capabilities": ["resolve", "download"],
+  "capabilities": [
+    "resolve",
+    "download"
+  ],
   "hosts": [
     "www.lacartoons.com",
     "*.lacartoons.com",
@@ -23,11 +26,27 @@
     "cubeembed.rpmvid.com"
   ],
   "streamHosts": "any",
-  "permissions": ["network"],
+  "permissions": [
+    "network"
+  ],
   "download": true,
-  "tags": ["español", "animación", "lacartoons"],
-  "resources": ["stream"],
-  "exports": ["getStreams"],
-  "supportedTypes": ["tv", "series", "movie"],
-  "contentLanguage": ["es"]
+  "tags": [
+    "español",
+    "animación",
+    "lacartoons"
+  ],
+  "resources": [
+    "stream"
+  ],
+  "exports": [
+    "getStreams"
+  ],
+  "supportedTypes": [
+    "tv",
+    "series",
+    "movie"
+  ],
+  "contentLanguage": [
+    "es"
+  ]
 }

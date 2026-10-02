@@ -1,7 +1,7 @@
 {
   "id": "lacartoons",
   "name": "LACartoons",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "apiVersion": 1,
   "minAppVersion": "1.0.0",
   "description": "Series animadas de LACartoons. Catálogo + servidores (OK.ru HLS/MP4, Dhtpre).",
@@ -10,7 +10,14 @@
   "homepage": "https://www.lacartoons.com/",
   "color": "#F5A623",
   "mode": "vod",
-  "capabilities": ["home", "search", "discover", "meta", "resolve", "download"],
+  "capabilities": [
+    "home",
+    "search",
+    "discover",
+    "meta",
+    "resolve",
+    "download"
+  ],
   "hosts": [
     "www.lacartoons.com",
     "*.lacartoons.com",
@@ -22,12 +29,22 @@
     "*.dhtpre.com",
     "cubeembed.rpmvid.com"
   ],
-  "permissions": ["network"],
+  "permissions": [
+    "network"
+  ],
   "download": true,
   "nsfw": false,
   "discoverable": true,
-  "tags": ["español", "animación", "series", "lacartoons", "latino"],
-  "contentLanguage": ["es"],
+  "tags": [
+    "español",
+    "animación",
+    "series",
+    "lacartoons",
+    "latino"
+  ],
+  "contentLanguage": [
+    "es"
+  ],
   "addons": [
     {
       "id": "lacartoons-catalog",
