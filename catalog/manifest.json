@@ -1,0 +1,34 @@
+{
+  "id": "lacartoons-catalog",
+  "name": "LACartoons Catalog",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "description": "Catálogo de series animadas de LACartoons.",
+  "logo": "icon.png",
+  "author": "Community",
+  "homepage": "https://www.lacartoons.com/",
+  "type": "catalog",
+  "entry": "index.js",
+  "mode": "vod",
+  "capabilities": ["home", "search", "discover", "meta"],
+  "mediaKinds": [
+    { "id": "series", "label": "Series" },
+    { "id": "anime", "label": "Animación" }
+  ],
+  "genresByKind": {
+    "series": [
+      { "id": "todas", "name": "Todas" }
+    ],
+    "anime": [
+      { "id": "todas", "name": "Todas" }
+    ]
+  },
+  "hosts": ["www.lacartoons.com", "*.lacartoons.com"],
+  "permissions": ["network"],
+  "tags": ["español", "animación", "series", "lacartoons"],
+  "resources": ["catalog", "meta", "search"],
+  "exports": ["getHome", "discover", "search", "getMeta"],
+  "supportedTypes": ["tv", "series"],
+  "contentLanguage": ["es"],
+  "defaultCategory": "series"
+}
